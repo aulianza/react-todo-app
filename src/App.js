@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import TodoList from "./components/TodoList";
 import TodoItems from "./components/TodoItems"
+import axios from "axios";
 import './App.css';
 
 class App extends Component {
@@ -12,32 +13,54 @@ class App extends Component {
     }
     this.inputElement = React.createRef()
   }
-  handleInput = e => {
-    const itemText = e.target.value
-    const currentItem = { text: itemText, key: Date.now() }
+
+  componentDidMount = () => {
+    this.getData()
+  }
+
+  handleInput = ({target}) => {
+    const itemText = target.value
+    const currentItem = { title: itemText, id: Date.now() }
     this.setState({
       currentItem:{...currentItem}
     })
   }
-  addItem = e => {
+  addItem = async (e) => {
+    const {currentItem, items} = this.state
     e.preventDefault()
-    const newItem = this.state.currentItem
-    if (newItem.text !== '') {
-      const items = [...this.state.items, newItem]
+    const newItem = currentItem
+    if (newItem.title !== '') {
+
+      let data = await axios.post('https://jsonplaceholder.typicode.com/posts', {
+        title: newItem.title
+      })
+
       this.setState({
-        items: items,
-        currentItem: { text: '', key: '' },
+        items: [...items, data.data],
+        currentItem: { title: '', id: '' },
       })
     }
   }
-  deleteItem = key => {
+  deleteItem = async (id) => {
+
+    let data = await axios.delete('https://jsonplaceholder.typicode.com/posts/' + id)
+    console.log(data)
+
     const filteredItems = this.state.items.filter(item => {
-      return item.key !== key
+      return item.id !== id
+      
     })
     this.setState({
       items: filteredItems,
     })
   }
+  getData = async () => {
+    let {data} = await axios.get('https://jsonplaceholder.typicode.com/todos')
+    this.setState({
+      items: data
+    })
+  }
+
   render() {
     return (
       <div className="App">
